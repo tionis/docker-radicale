@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-Enhanced Docker image for <a href="http://radicale.org">Radicale</a>, the CalDAV/CardDAV server.
+Enhanced Docker image for <a href="https://radicale.org">Radicale</a>, the CalDAV/CardDAV server.
 </p>
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -26,9 +26,11 @@ Enhanced Docker image for <a href="http://radicale.org">Radicale</a>, the CalDAV
   - [Option 1: **Basic** instruction](#option-1-basic-instruction)
   - [Option 2: **Recommended, Production-grade** instruction (secured, safe...) :rocket:](#option-2-recommended-production-grade-instruction-secured-safe-rocket)
 - [Custom configuration](#custom-configuration)
+- [Authentication configuration](#authentication-configuration)
 - [Volumes versus Bind-Mounts](#volumes-versus-bind-mounts)
 - [Running with Docker compose](#running-with-docker-compose)
 - [Multi-architecture](#multi-architecture)
+- [Unraid](#unraid)
 - [Extending the image](#extending-the-image)
 - [Versioning with Git](#versioning-with-git)
 - [Custom User/Group ID for the data volume](#custom-usergroup-id-for-the-data-volume)
@@ -37,6 +39,8 @@ Enhanced Docker image for <a href="http://radicale.org">Radicale</a>, the CalDAV
   - [Option 2: Force the user/group ids on `docker run`](#option-2-force-the-usergroup-ids-on-docker-run)
   - [Option 3: Build the image with a custom user/group](#option-3-build-the-image-with-a-custom-usergroup)
 - [Tags](#tags)
+- [Running with Podman](#running-with-podman)
+- [Running behind Caddy](#running-behind-caddy)
 - [Contributing](#contributing)
 - [Releasing](#releasing)
 - [Contributors](#contributors)
@@ -47,8 +51,11 @@ Enhanced Docker image for <a href="http://radicale.org">Radicale</a>, the CalDAV
 
 * :closed_lock_with_key: **Secured**: the container is read-only, with only access to its data dir, and without extraneous privileges
 * :fire: **Safe**: run as a normal user (not root)
-* :building_construction: **Multi-architecture**: run on amd64, arm64 and armv7 (Raspberry Pi, ...)
-* :sparkles: **Batteries included**: git included for [versioning](https://github.com/tomsquest/docker-radicale/#versioning-with-git) and Pytz/tz-data for proper timezone handling
+* :building_construction: **Multi-architecture**: run on amd64 and arm64
+* :sparkles: **Batteries included**: 
+  * git and ssh included for [versioning](https://github.com/tomsquest/docker-radicale/#versioning-with-git)
+  * Python ldap3 for [LDAP authentication](https://github.com/Kozea/Radicale/wiki/LDAP-authentication)
+  * Python pytz for proper timezone handling
 
 ## Changelog
 
@@ -107,13 +114,52 @@ To customize Radicale configuration, first get the config file:
 * (Recommended) use this repository preconfigured [config file](config),
 * Or, use [the original Radicale config file](https://raw.githubusercontent.com/Kozea/Radicale/master/config) and:
   1. set `hosts = 0.0.0.0:5232`
-  1. set `filesystem_folder = /data/collections`
+  2. set `filesystem_folder = /data/collections`
 
 Then:
 1. create a config directory (eg. `mkdir -p /my_custom_config_directory`)
-2. copy your config file into the config folder (eg. `cp config /my_custom_config_directory/config`)
+2. copy your config file into the config folder (e.g. `cp config /my_custom_config_directory/config`)
 3. mount your custom config volume when running the container: `-v /my_custom_config_directory:/config:ro`.
 The `:ro` at the end make the volume read-only, and is more secured.
+
+## Authentication configuration
+
+This section shows a basic example of configuring authentication for Radicale using htpasswd with bcrypt algorithm.  
+To learn more, refer to [the official Radicale document](https://radicale.org/v3.html#auth).
+
+First, we need to configure Radicale to use htpasswd authentication and specify htpasswd file's location.  
+Create a `config` file inside the `config` directory (resulting in the path `config/config`).
+
+```
+[server]
+hosts = 0.0.0.0:5232
+
+[auth]
+type = htpasswd
+htpasswd_filename = /config/users
+htpasswd_encryption = bcrypt
+
+[storage]
+filesystem_folder = /data/collections
+```
+
+Next, create a `users` file inside the `config` directory (resulting in the path `config/users`).  
+Each line contains the username and bcrypt-hashed password, separated by a colon (`:`).
+
+```
+john:$2a$10$l1Se4qIaRlfOnaC1pGt32uNe/Dr61r4JrZQCNnY.kTx2KgJ70GPSm
+sarah:$2a$10$lKEHYHjrZ.QHpWQeB/feWe/0m4ZtckLI.cYkVOITW8/0xoLCp1/Wy
+```
+
+Finally, create and run the container using the appropriate volume mount.
+In this example, both files are stored in the same directory (`./config`).
+
+```bash
+docker run -d --name radicale tomsquest/docker-radicale \
+    -p 5232:5232 \
+    -v ./data:/data \
+    -v ./config:/config
+```
 
 ## Volumes versus Bind-Mounts
 
@@ -134,12 +180,17 @@ docker run -d --name radicale tomsquest/docker-radicale \
 
 ## Running with Docker compose
 
-A [Docker compose file](docker-compose.yml) is included. 
-It can also be [extended](https://docs.docker.com/compose/production/#modify-your-compose-file-for-production). 
+A [Docker compose file](docker-compose.yml) is included.  
+It can also be [extended](https://docs.docker.com/compose/production/#modify-your-compose-file-for-production).  
+Make sure you have Docker compose version 2 or higher.
 
 ## Multi-architecture
 
-The correct image type for your architecture will be automatically selected by Docker, whether it is amd64, arm64 or armv7 (Raspberry Pi).
+Docker will automatically select the correct image type for your architecture, whether it is amd64 or arm64.
+
+## Unraid
+
+This image is compatible with Unraid, and you can find it in the [Community App store](https://unraid.net/community/apps?q=radicale#r).
 
 ## Extending the image
 
@@ -156,8 +207,8 @@ First, create a `Dockerfile.extended` (pick the name you want) with this content
 ```dockerfile
 FROM tomsquest/docker-radicale
 
-RUN python3 -m pip install git+https://github.com/Unrud/RadicaleIMAP
-RUN python3 -m pip install git+https://github.com/Unrud/RadicaleInfCloud
+RUN /venv/bin/pip install git+https://github.com/Unrud/RadicaleIMAP
+RUN /venv/bin/pip install git+https://github.com/Unrud/RadicaleInfCloud
 ```
 
 Then, build and run it:
@@ -174,13 +225,12 @@ This hook can be used to keep a versions of your CalDAV/CardDAV files through gi
 
 This image provides `git` to support this feature. 
 
-Refer to the [official documentation of Radicale](https://radicale.org/3.0.html#tutorials/versioning-with-git) 
-for the details.
+Refer to the [official documentation of Radicale](https://radicale.org/v3.html#versioning-with-git) for the details.
 
 ## Custom User/Group ID for the data volume
 
 You will certainly mount a volume to keep Radicale data between restart/upgrade of the container.
-But sharing files from the host, and the container can be problematic.
+But sharing files from the host and the container can be problematic.
 The reason is that `radicale` user **in** the container does not match the user running the container **on** the host.
 
 To solve this, this image offers four options (see below for details):
@@ -192,7 +242,7 @@ To solve this, this image offers four options (see below for details):
 
 ### Option 0: Do nothing, permission will be fixed by the container itself
 
-When running the container with a /data volume (eg. `-v ./data:/data`), the container entrypoint will automatically fix the permissions on `/data`.
+When running the container with a /data volume (e.g. `-v ./data:/data`), the container entrypoint will automatically fix the permissions on `/data`.
 
 This option is OK, but not optimal:
 - Ok for the container, as inside the container, the `radicale` user can read and write its data
@@ -200,8 +250,8 @@ This option is OK, but not optimal:
 
 ### Option 1: Create a user/group with id `2999` on the host
 
-The image creates a user and a group with Id `2999` in the container.  
-You can create an user/group on your host matching this Id.
+The image creates a user and a group with id `2999` in the container.  
+You can create a user/group on your host matching this id.
 
 Example:
 
@@ -213,8 +263,8 @@ sudo adduser --gid 2999 --uid 2999 --shell /bin/false --disabled-password --no-c
 
 ### Option 2: Force the user/group ids on `docker run`
 
-The user and group Ids used in the container can be overridden when the container is run.  
-This is done with the `UID` and `GID` env variables, eg. `docker run -e UID=123 -e GID=456 ...`.  
+The user and group ids used in the container can be overridden when the container is run.  
+This is done with the `UID` and `GID` env variables, e.g. `docker run -e UID=123 -e GID=456 ...`.  
 This will force all operations to be run with this UID/GID.
 
 :warning: The **`--read-only`** run flag cannot be used in this case. 
@@ -222,8 +272,8 @@ Using custom UID/GID tries to modify the filesystem at runtime but this is made 
 
 ### Option 3: Build the image with a custom user/group
 
-You can build the image with custom user and group Ids and still use the `--read-only` flag.  
-But, you will have to clone this repo, do a local build and keep up with changes of this image.
+You can build the image with custom user and group ids and still use the `--read-only` flag.  
+But you will have to clone this repo, do a local build and keep up with changes of this image.
 
 Usage: `docker build --build-arg=BUILD_UID=5000 --build-arg=BUILD_GID=5001 ...`.
 
@@ -244,18 +294,43 @@ Example:
 The last number is **ours**, and it is incremented on new release. 
 For example, 2.1.11.**2** made the /config readonly (this is specific to this image).
 
+## Running with Podman
+
+Two users have given the instructions they used to run the image with Podman:
+- [@greylinux's instructions](https://github.com/tomsquest/docker-radicale/issues/122#issuecomment-1361240992)
+- [@strauss115's instructions](https://github.com/tomsquest/docker-radicale/issues/122#issuecomment-1874607285)
+
+## Running behind Caddy
+
+[Caddy](https://caddyserver.com) is sitting in front of all my self-hosted services, like Radicale.  
+It brings https and security (basic authentication).
+
+The following Caddyfile works for me. Note that I don't use Radicale authentication, I have only one user.
+
+```caddyfile
+radicale.yourdomain.com {
+    reverse_proxy 127.0.0.1:5232
+
+    basicauth {
+        tom pas$w0rd
+    }
+}
+```
+
 ## Contributing
 
 To run the tests:
 
 1. `pip install pipenv`
-1. `pipenv install -d`
-1. `pytest -v`
+2. `pipenv install -d`
+3. `pipenv run pytest -v`
 
 ## Releasing
 
-1. Create a Git tag, eg. `3.0.6.0`, push it and the CI will build the images and publish them on Docker hub
-1. Update the `latest` tag
+1. Create a Git tag, e.g. `3.0.6.0`, push it and the CI will build the images and publish them on Docker hub
+2. Update the `latest` tag
+4. Update `CHANGELOG.md` (after, or in the PR)
+3. Create release on GitHub (`Draft a new release` > pick the tag > `Generate release notes` > `Publish release`)
 
 Example instructions :
 
@@ -266,10 +341,19 @@ git fetch --all --tags
 TAG=3.0.6.0 && git tag $TAG && git push origin $TAG
 # Update latest tag
 git push --delete origin latest && git tag -d latest && git tag latest && git push origin latest
+# Draft a new release
+# https://github.com/tomsquest/docker-radicale/releases/new
 ```
 
 ## Contributors
 
+* [Emil Miller](https://github.com/realcharmer): update to Radicale 3.3.0
+* [Nate Harris](https://github.com/nwithan8): add image to Unraid community app store
+* [SalaryTheft](https://github.com/SalaryTheft): add section about Authentication configuration
+* [Dillbyrne](https://github.com/dillbyrne): update alpine
+* [Jauder Ho](https://github.com/jauderho): update alpine
+* [Greylinux](https://github.com/Greylinux): running with podman
+* [Tionis](https://github.com/tionis): add openssh for git ssh remotes
 * [flixhsw](https://github.com/flixhsw): support armv7 (Raspberry) and simplify the CI using Docker Buildx
 * [hecd](https://github.com/hecd): fix to run su-exec only when the actual user is root
 * [Jake Mayeux](https://github.com/jakemayeux): change "data" folder to `./data` instead of `~/radicale/data` in docker-compose.yml and doc
@@ -279,7 +363,7 @@ git push --delete origin latest && git tag -d latest && git tag latest && git pu
 * [Adzero](https://github.com/adzero): override build args with environment variables
 * [Robert Beal](https://github.com/robertbeal): fixed/configurable userId, versioning...
 * [Loader23](https://github.com/Loader23): config volume idea
-* [Waja](https://github.com/waja): less layers is more, InfCloud integration (UI for Radicale) 
+* [Waja](https://github.com/waja): fewer layers is more, InfCloud integration (UI for Radicale) 
 * [Christian Burmeister](https://github.com/christianbur): add tzdata to be able to specify timezone 
 * [Silas Lenz](https://github.com/silaslenz): add pytz for recurring events
 * [Enno Richter](https://github.com/elohmeier): bcrypt support 

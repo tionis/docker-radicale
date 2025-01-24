@@ -4,6 +4,128 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [3.4.0.0] - 2025-01-11
+
+## Changed
+
+- [Update to Radicale 3.4.0](https://github.com/tomsquest/docker-radicale/pull/173)
+
+## [3.3.3.0] - 2025-01-04
+
+## Changed
+
+- [Update to Radicale 3.3.3](https://github.com/tomsquest/docker-radicale/pull/172)
+
+## [3.3.2.0] - 2024-12-16
+
+## Changed
+
+- [Update to Radicale 3.3.2](https://github.com/tomsquest/docker-radicale/pull/171)
+
+## [3.3.1.1] - 2024-12-03
+
+## Added
+
+- [Add Python ldap3 to allow LDAP authentication](https://github.com/tomsquest/docker-radicale/pull/169)
+
+## [3.3.1.0] - 2024-11-27
+
+## Changed
+
+- [Update to Radicale 3.3.1](https://github.com/tomsquest/docker-radicale/pull/168)
+ 
+## [3.3.0.0] - 2024-10-14
+
+## Changed
+
+- [Update to Radicale 3.3.0](https://github.com/tomsquest/docker-radicale/pull/161)
+
+## [3.2.3.1] - 2024-09-18
+
+## Fixed
+
+- [move pytz from global (alpine) to python venv](https://github.com/tomsquest/docker-radicale/pull/160)
+
+## [3.2.3.0] - 2024-08-30
+
+## Changed
+
+- [Update to Radicale 3.2.3](https://github.com/tomsquest/docker-radicale/pull/158)
+
+## [3.2.2.0] - 2024-06-20
+
+## Changed
+
+- [Update to Radicale 3.2.2](https://github.com/tomsquest/docker-radicale/pull/152)
+
+## [3.2.1.0] - 2024-06-07
+
+## Changed
+
+- [Update to Radicale 3.2.1](https://github.com/tomsquest/docker-radicale/pull/151)
+
+## [3.2.0.0] - 2024-05-13
+
+## Changed
+
+- [Update to Radicale 3.2.0](https://github.com/tomsquest/docker-radicale/pull/147)
+
+
+## [3.1.9.1] - 2024-03-18
+
+## Changed
+
+- [Update to Alpine 3.19.1 from 3.18.2](https://github.com/tomsquest/docker-radicale/pull/141)
+
+## [3.1.9.0] - 2024-03-18
+
+## Changed
+
+- [Update to Radicale 3.1.9](https://github.com/tomsquest/docker-radicale/pull/139)
+
+## [3.1.8.3] - 2023-07-16
+
+## Changed
+
+- [Update alpine to 3.18.2](https://github.com/tomsquest/docker-radicale/pull/132)
+
+## [3.1.8.2] - 2023-04-18
+
+## Changed
+
+- [Update alpine to 3.17.3](https://github.com/tomsquest/docker-radicale/pull/131)
+
+## [3.1.8.1] - 2023-02-22
+
+## Changed
+
+- [Update alpine to 3.17.2](https://github.com/tomsquest/docker-radicale/pull/127)
+- [Drop support for arm/v7](https://github.com/tomsquest/docker-radicale/pull/128)
+
+## [3.1.8.0] - 2022-07-19
+
+## Changed
+
+- Upgrade to [Radicale 3.1.8](https://github.com/Kozea/Radicale/blob/master/CHANGELOG.md#318)
+
+## [3.1.7.0] - 2022-04-21
+
+## Changed
+
+- Upgrade to [Radicale 3.1.7](https://github.com/Kozea/Radicale/blob/master/CHANGELOG.md#317)
+
+## [3.1.6.0] - 2022-04-21
+
+## Changed
+
+- Upgrade to [Radicale 3.1.6](https://github.com/Kozea/Radicale/blob/master/CHANGELOG.md#316)
+
+## [3.1.5.1] - 2022-03-05
+
+## New
+
+- [#117](https://github.com/tomsquest/docker-radicale/pull/117): add openssh for git ssh remotes
+
 ## [3.1.5.0] - 2022-02-10
 
 ## Changed
